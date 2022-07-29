@@ -8,7 +8,7 @@ static struct box boxes[BLOCK_COLS][BLOCK_ROWS];
 static char flags[BLOCK_COLS][BLOCK_ROWS];
    // ブロックが表示されているか、ボールが当たって消えているかの状態を表す二次元配列
    // (たとえば、表示中なら1, 消えていれば0)
-static int num_blocks;   // 残りブロック数
+int num_blocks;   // 残りブロック数
 static int bound_x, bound_y;
 
 void draw_box(box *b, hword color)
@@ -108,7 +108,7 @@ int box_step(){
          delete_block(hit_rd);
 
          if(num_blocks == 0){
-            draw_clear();
+            draw_clear(0, 0, LCD_WIDTH, LCD_HEIGHT);
             game_set_state(CLEAR);
          }
          return bound_x + bound_y * 2;
