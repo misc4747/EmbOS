@@ -206,10 +206,11 @@ int main(){
         int key = gba_register(KEY_STATUS);
         switch (game_get_state()) {
         case START:
+            draw_string(COLOR_WHITE, "PRESS START BUTTON", 48, 100);
             if(! (key & KEY_START)){
-
-                ball_step();
+                draw_clear(0, 0, LCD_WIDTH, LCD_HEIGHT);
                 racket_step();
+                ball_step();
                 box_step();
                 draw_string(COLOR_WHITE, "LIFE:", 184, 152);
                 erase_and_draw_char(COLOR_WHITE, remain_life + '0', 224, 152);
@@ -237,8 +238,8 @@ int main(){
         case RESTART:
             remain_life = 3;
             cnt = 0;
-            ball_step();
             racket_step();
+            ball_step();
             box_step();
             remain_life = LIFE;
             game_set_state(RUNNING);
@@ -246,7 +247,7 @@ int main(){
         case CLEAR:
             draw_string(COLOR_WHITE, "CLEAR", 100, 80);
             draw_score(remain_life, cnt, num_blocks);
-            draw_string(COLOR_WHITE, "PRESS START", 76, 100);
+            draw_string(COLOR_WHITE, "PRESS START TO RESTART", 32, 100);
             if(! (key & KEY_START)){
                 game_set_state(START);
             }
