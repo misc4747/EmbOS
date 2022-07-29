@@ -1,9 +1,11 @@
 extern void racket_step(void);
 extern void racket_init(void);
+
 extern void draw_char(hword color, int code, int x, int y);
 extern void erase_and_draw_char(hword color, int code, int x, int y);
-extern void draw_clear(void);
+extern void draw_clear(int x, int y, int width, int height);
 extern void draw_string(hword color, char *str, int x, int y);
+
 extern enum state game_get_state(void);
 extern void game_set_state(enum state);
 

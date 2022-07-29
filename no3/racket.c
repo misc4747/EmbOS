@@ -2,19 +2,16 @@
 #include "ball.h"
 #include "racket.h"
 #include "box.h"
-#include "ping.c"
+#include "score.h"
 
 #include "8x8.til"
-
-// External global symbols
-
-int* waveptr = (int*) wave_data;	// Wave data pointer
-int  wavecnt = 0;			// Wave data counter
 
 // Interrupt handler
 racket racket1;
 int old_key;
-enum state game_state = START;
+int cnt;
+int remain_life;
+enum state game_state;
 
 void draw_char(hword color, int code, int x, int y){
     hword   *ptr = (hword*)VRAM + y * LCD_WIDTH + x;
@@ -43,16 +40,25 @@ void draw_string(hword color, char *str, int x, int y){
     }
 }
 
-void draw_clear(){
+void draw_clear(int x, int y, int width, int height){
     hword   *base, *d;
-    base = (hword*)VRAM + LCD_WIDTH;
+    base = (hword*)VRAM + LCD_WIDTH * y + x;
 
-    for (int h = 160; h > 0; h--) {
+    for (int h = height; h > 0; h--) {
         d = base;
-        for (int w = 240; w > 0; w--)
+        for (int w = width; w > 0; w--)
             *(d++) = COLOR_BLACK;
         base += LCD_WIDTH;
     }
+}
+
+void draw_bound_count(){
+    int x = 0;
+    int y = 152;
+    draw_string(COLOR_WHITE, "COUNT:", x, y);
+    erase_and_draw_char(COLOR_WHITE, cnt / 100 + '0', x + FONT_SIZE * 6, y);
+    erase_and_draw_char(COLOR_WHITE, (cnt % 100) / 10 + '0', x + FONT_SIZE * 7, y);
+    erase_and_draw_char(COLOR_WHITE, cnt % 10 + '0', x + FONT_SIZE * 8, y);
 }
 
 void draw_racket(struct racket *r, int x, int y, hword color){
@@ -175,6 +181,7 @@ void racket_step(){
                 ball_set_dx(new_dx);
                 ball_set_dy(new_dy);
             }
+            cnt++;
         }
         break;
     case DEAD:
@@ -191,14 +198,16 @@ void racket_step(){
 int main(){
     /* Initialize LCD Control Register to use Mode 3. */
     gba_register(LCD_CTRL) = LCD_BG2EN | LCD_MODE3;
-
+    game_set_state(START);
+    remain_life = 3;
+    cnt = 0;
     while(1){
         wait_until_vblank();
         int key = gba_register(KEY_STATUS);
         switch (game_get_state()) {
         case START:
             if(! (key & KEY_START)){
-                int remain_life = 3;
+
                 ball_step();
                 racket_step();
                 box_step();
@@ -217,13 +226,17 @@ int main(){
             }
             if(! (key & KEY_START)){
                 remain_life--;
+                draw_clear(0, 80, LCD_WIDTH, 80);
+                draw_string(COLOR_WHITE, "LIFE:", 184, 152);
                 erase_and_draw_char(COLOR_WHITE, remain_life + '0', 224, 152);
                 ball_init();
                 racket_init();
                 game_set_state(RUNNING);
             }
             break;
-        case RESTART:     
+        case RESTART:
+            remain_life = 3;
+            cnt = 0;
             ball_step();
             racket_step();
             box_step();
@@ -232,20 +245,21 @@ int main(){
             break;
         case CLEAR:
             draw_string(COLOR_WHITE, "CLEAR", 100, 80);
+            draw_score(remain_life, cnt, num_blocks);
             draw_string(COLOR_WHITE, "PRESS START", 76, 100);
             if(! (key & KEY_START)){
                 game_set_state(START);
             }
             break;
         case GAMEOVER:
-
             draw_string(COLOR_WHITE, "GAME OVER", 86, 80);
+            draw_score(remain_life, cnt, num_blocks);
             if(! (key & KEY_START)){
-                game_set_state(RESTART);
+                draw_clear(0, 0, LCD_WIDTH, LCD_HEIGHT);
+                game_set_state(START);
             }
             break;
         }
-        draw_ball_coord();
         delay(10000);
         wait_while_vblank();
     }
